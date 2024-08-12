@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
 
 // Initialize OpenAI with your API key
-const openai = new OpenAI(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);
+const openai = new OpenAI(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);
 
 // Sliding window size (number of previous messages to keep in context)
 const SLIDING_WINDOW_SIZE = 5;
