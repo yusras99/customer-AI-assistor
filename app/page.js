@@ -1,3 +1,5 @@
+// app/page.js
+
 "use client"; // Ensure this file is client-side only
 
 import { Box, Button, Stack, TextField, CircularProgress } from '@mui/material';
@@ -27,38 +29,27 @@ function Home() {
     setIsLoading(true);
     setMessage('');
 
-    setMessages((messages) => [
+    const newMessages = [
       ...messages,
       { role: 'user', content: message },
       { role: 'assistant', content: '...' },
-    ]);
+    ];
+
+    setMessages(newMessages);
 
     try {
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify([...messages, { role: 'user', content: message }]),
+        body: JSON.stringify({ messages: newMessages }),
       });
 
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let result = '';
+      const { response: responseMessage } = await response.json();
 
-      await reader.read().then(function processText({ done, value }) {
-        if (done) return result;
-        const text = decoder.decode(value || new Uint8Array(), { stream: true });
-
-        setMessages((messages) => {
-          let lastMessage = messages[messages.length - 1];
-          let otherMessages = messages.slice(0, messages.length - 1);
-          return [
-            ...otherMessages,
-            { ...lastMessage, content: lastMessage.content === '...' ? text : lastMessage.content + text },
-          ];
-        });
-
-        return reader.read().then(processText);
-      });
+      setMessages((messages) => [
+        ...messages.slice(0, messages.length - 1), // Remove the typing indicator
+        { role: 'assistant', content: responseMessage },
+      ]);
     } catch (err) {
       console.error('Failed to send message:', err);
       setMessages((messages) => [
@@ -75,6 +66,10 @@ function Home() {
       event.preventDefault();
       sendMessage();
     }
+  };
+
+  const clearContext = () => {
+    setMessages([{ role: 'assistant', content: "Context reset. How can I assist you now?" }]);
   };
 
   return (
@@ -159,6 +154,16 @@ function Home() {
             style={{ minWidth: '100px', padding: '12px' }}
           >
             {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Send'}
+          </Button>
+        </Stack>
+        <Stack direction={'row'} spacing={2} pt={1}>
+          <Button
+            variant="outlined"
+            color="secondary"
+            onClick={clearContext}
+            style={{ minWidth: '100px', padding: '12px' }}
+          >
+            Clear Context
           </Button>
         </Stack>
       </Stack>
